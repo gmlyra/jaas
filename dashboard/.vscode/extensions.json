@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "Vue.vscode-typescript-vue-plugin",
+    "humao.rest-client",
+    "ZixuanChen.vitest-explorer",
+    "Vue.volar",
+    "christian-kohler.path-intellisense",
+    "esbenp.prettier-vscode",
+    "formulahendry.auto-rename-tag",
+    "eamodio.gitlens",
+    "xabikos.JavaScriptSnippets",
+    "kamikillerto.vscode-colorize",
+    "ChakrounAnas.turbo-console-log",
+    "wayou.vscode-todo-highlight",
+    "vscode-icons-team.vscode-icons"
+  ]
+}
