@@ -1,0 +1,11 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.guides.bracketPairs": true,
+  "workbench.iconTheme": "vscode-icons",
+  "todohighlight.isEnable": true,
+  "todohighlight.isCaseSensitive": true
+}
