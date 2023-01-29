@@ -73,6 +73,7 @@ services:
       - "3000:3000"
   swagger:
     image: swaggerapi/swagger-ui
+    restart: always
     ports:
       - "8080:8080"
     expose:
