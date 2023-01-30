@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 const config = useRuntimeConfig();
 
 export default NuxtAuthHandler({
+  secret: config.JWT,
   providers: [
     // @ts-expect-error
     GithubProvider.default({

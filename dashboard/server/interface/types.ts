@@ -46,7 +46,7 @@ interface User {
 }
 
 interface Field {
-  id: string;
+  id?: string;
   name: string;
   type: FieldType;
   options: {
@@ -56,8 +56,8 @@ interface Field {
     array?: boolean;
     custom?: any;
   };
-  userId: string;
-  collectionId: string;
+  userId?: string;
+  collectionId?: string;
 }
 
 enum FieldType {

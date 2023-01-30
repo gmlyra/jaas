@@ -1,16 +1,19 @@
 create schema api;
 
-create table api.todos (
-  id serial primary key,
-  done boolean not null default false,
-  task text not null,
-  due timestamptz
-);
+-- Create an event trigger function
+CREATE OR REPLACE FUNCTION public.pgrst_watch() RETURNS event_trigger
+  LANGUAGE plpgsql
+  AS $$
+BEGIN
+  NOTIFY pgrst, 'reload schema';
+END;
+$$;
 
-insert into api.todos (task) values
-  ('finish tutorial 0'), ('pat self on back');
+-- This event trigger will fire after every ddl_command_end event
+CREATE EVENT TRIGGER pgrst_watch
+ON ddl_command_end
+EXECUTE PROCEDURE public.pgrst_watch();
 
 create role web_anon nologin;
 
 grant usage on schema api to web_anon;
-grant select on api.todos to web_anon;
