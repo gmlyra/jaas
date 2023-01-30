@@ -2,6 +2,7 @@ import { createRouter, defineEventHandler, useBase } from "h3";
 
 import { Field } from "~~/server/interface/types";
 import { pgClient } from "../db/pgClient";
+import CollectionController from "~~/server/controller/CollectionController";
 
 const router = createRouter();
 
@@ -16,7 +17,7 @@ router.post(
       event
     );
 
-    const Client = pgClient;
+    const Client = pgClient();
     Client.connect();
     try {
       const exists = await Client.query(
@@ -38,15 +39,7 @@ router.post(
 
       // Add all fields to the query
       if (fields && fields.length > 0) {
-        creationQuery = `create table api.${name} (id serial primary key,`;
-        fields.forEach((field, index) => {
-          creationQuery += `${field.name} ${field.type}${
-            field.options?.array ? "[]" : ""
-          } ${field.options?.unique ? "unique" : ""} ${
-            field.options?.default ? `default ${field.options?.default}` : ""
-          }${index === fields.length - 1 ? "" : ","}`;
-        });
-        creationQuery += `);`;
+        creationQuery = CollectionController.collectionToSql(name, fields);
       } else {
         setResponseStatus(event, 400);
         return { msg: "No fields provided" };
@@ -83,7 +76,7 @@ router.patch(
       fields,
     }: { collectionName: string; dropId: boolean; fields: Field[] } =
       await readBody(event);
-    const Client = pgClient;
+    const Client = pgClient();
     Client.connect();
     try {
       let schema = await Client.query(`
@@ -96,59 +89,30 @@ router.patch(
         schema.rows = schema.rows.filter((row) => row.column_name !== "id");
       }
 
-      const schemaFields = schema.rows.map((row) => row.column_name);
-      const fieldsToAdd: Field[] = [];
-      const fieldsToUpdate: Field[] = [];
-      const fieldsToRemove = schemaFields.filter((field) => {
-        return !fields.map((field) => field.name).includes(field);
-      });
-      fields.forEach((field) => {
-        if (!schemaFields.includes(field.name)) {
-          fieldsToAdd.push(field);
-        } else if (
-          field.type.toLocaleLowerCase() !==
-          schema.rows.find((row) => row.column_name === field.name).data_type
-        ) {
-          fieldsToUpdate.push(field);
-        }
-      });
+      const schemaFields = CollectionController.schemaToFields(schema.rows);
+
+      const { fieldsToAdd, fieldsToUpdate, fieldsToRemove } =
+        CollectionController.compareFields(schemaFields, fields);
 
       let updateQuery = "";
-      if (fieldsToAdd.length > 0) {
-        fieldsToAdd.forEach((field, index) => {
-          updateQuery += `alter table api.${collectionName} add column ${
-            field.name
-          } ${field.type}${field.options?.array ? "[]" : ""} ${
-            field.options?.unique ? "unique" : ""
-          } ${
-            field.options?.default ? `default ${field.options?.default}` : ""
-          }${index === fieldsToAdd.length - 1 ? "" : ","}`;
-          updateQuery += ";";
-        });
-      }
-      if (fieldsToUpdate.length > 0) {
-        fieldsToUpdate.forEach((field, index) => {
-          updateQuery += `alter table api.${collectionName} alter column ${
-            field.name
-          } type ${field.type}${field.options?.array ? "[]" : ""} ${
-            field.options?.unique ? "unique" : ""
-          } ${
-            field.options?.default ? `default ${field.options?.default}` : ""
-          }${index === fieldsToUpdate.length - 1 ? "" : ","}`;
-        });
-        updateQuery += ";";
-      }
-      if (fieldsToRemove.length > 0) {
-        fieldsToRemove.forEach((field, index) => {
-          updateQuery += `alter table api.${collectionName} drop column ${field}${
-            index === fieldsToRemove.length - 1 ? "" : ","
-          }`;
-          updateQuery += ";";
-        });
-      }
+
+      // Add all fields to the query
+
+      updateQuery += CollectionController.alterFieldsAddToSql(
+        fieldsToAdd,
+        collectionName
+      );
+      updateQuery += CollectionController.alterFieldsAlterToSql(
+        fieldsToUpdate,
+        collectionName
+      );
+      updateQuery += CollectionController.alterFieldsDropToSql(
+        fieldsToRemove,
+        collectionName
+      );
+
       const execute = await Client.query(updateQuery);
       if (execute) {
-        setResponseStatus(event, 200);
         return { msg: "Collection updated" };
       } else {
         setResponseStatus(event, 400);
@@ -173,7 +137,7 @@ router.delete(
       event
     );
 
-    const Client = pgClient;
+    const Client = pgClient();
     Client.connect();
     try {
       const response = await Client.query(`drop table api.${collectionName};`);

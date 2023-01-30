@@ -7,7 +7,7 @@ interface Collection {
   };
   userId: string;
   isDocumentBased: boolean;
-  fields?: { [key: string]: string };
+  fields?: Field[];
   public: boolean;
 }
 
@@ -51,6 +51,7 @@ interface Field {
   type: FieldType;
   options: {
     unique?: boolean;
+    nullable?: boolean;
     maxLength?: number;
     default?: any;
     array?: boolean;
