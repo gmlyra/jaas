@@ -7,9 +7,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   });
   nuxtApp.hook("app:error", (..._args) => {
     console.log("app:error");
-    // if (process.client) {
-    //   console.log(..._args)
-    // }
+    if (process.client) {
+      console.log(..._args);
+    }
   });
   nuxtApp.vueApp.config.errorHandler = (..._args) => {
     console.log("global error handler");
